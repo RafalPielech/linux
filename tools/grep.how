@@ -1,0 +1,5 @@
+// Dopasuje linie i po tej dopasowanej lini wyświetli jeszcze dwie linie
+// -A n - n lini za dopasowaniem
+// -B n - n lini przed dopasowaniem
+$ cat /proc/yaffs | grep -E -A 2 "^.*?home.*$"
+
