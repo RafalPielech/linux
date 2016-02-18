@@ -1,0 +1,3 @@
+// Pozwala dodać użytkownika do grupy, żeby np. uzyskać dostęp do urządzeń
+sudo usermod -a -G [group] [username]
+
