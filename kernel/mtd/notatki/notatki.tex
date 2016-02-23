@@ -1,0 +1,18 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{polski}
+\usepackage[utf8]{inputenc}
+\title{Memory Technology Device (MTD)}
+\author{Rafał Pielech}
+\date{}
+ 
+\begin{document}
+\maketitle
+\section{Notatki}
+Tutaj kilka obserwacji dot. MTD.
+\subsection{Dodawanie partycji}
+\verb1mtd_device_parse_register(...)1 - rejestruje partycje poprzez wywołanie \verb1parse_mtd_partitions1. Dostaje ona listę partycji (typu \verb1mtd_partition1) wcześniej przygotowaną przez sterowniki poszczególnych kości pamięci. Struktura \verb1mtd_inf1 jak i \verb1mtd_partition1 dają pełną wiedzę dla MTD do używania pamięci.
+
+Funkcja \verb1mtd_device_parse_register(...)1 nie zawsze dostaje gotową listę partycji. Czasami sterownik pamięci przesyła \verb1of_node1 jako parser data (trzeci parametr). Dzieje się tak w przypadku \verb8mpc51218. Wtedy sterownik podaje \verb1mtd_info1 ze wskaźnikami do funkcji obsługujących pamięć i wspomniany \verb1of_node1.
+
+Partycje potem są alokowane w funkcji \verb1allocate_partition1. Funkcja ta bierze master, czyli rodzica partycji, urządzenie zawierające alokowaną partycję. Potem partycję, jej numer i offset. Zwracany jest zaalokowany obiekt typu \verb1mtd_part1, który dużo dziedziczy po masterze, natomiast funkcje czytające, piszące dla owej partycji nie są bezpośrednio dziedziczone. Tam przypisywane są funkcje z prefiksem \verb1part1, które i tak odwołują się do funkcji mastera w swoim ciele.
+\end{document}
