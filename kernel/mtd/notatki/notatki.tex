@@ -1,18 +1,46 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[11pt]{article}
+\usepackage{geometry}
+\geometry{a4paper, total={165mm,257mm}, left=20mm, top=20mm}
 \usepackage{polski}
 \usepackage[utf8]{inputenc}
 \title{Memory Technology Device (MTD)}
 \author{Rafał Pielech}
-\date{}
  
 \begin{document}
 \maketitle
 \section{Notatki}
 Tutaj kilka obserwacji dot. MTD.
 \subsection{Dodawanie partycji}
-\verb1mtd_device_parse_register(...)1 - rejestruje partycje poprzez wywołanie \verb1parse_mtd_partitions1. Dostaje ona listę partycji (typu \verb1mtd_partition1) wcześniej przygotowaną przez sterowniki poszczególnych kości pamięci. Struktura \verb1mtd_inf1 jak i \verb1mtd_partition1 dają pełną wiedzę dla MTD do używania pamięci.
+\verb1mtd_device_parse_register1 rejestruje partycje poprzez wywołanie funkcji \verb1parse_mtd_partitions1. Dostaje ona listę partycji (typu \verb1mtd_partition1) wcześniej przygotowaną przez sterownik kości pamięci. Struktura \verb1mtd_info1 jak i \verb1mtd_partition1 dają pełną wiedzę dla MTD do używania pamięci. Funkcja \verb1mtd_device_parse_register1 nie zawsze dostaje gotową listę partycji. Czasami sterownik pamięci przesyła \verb1of_node1 jako parser data (trzeci parametr). Dzieje się tak w przypadku mpc5121. Wtedy sterownik podaje \verb1mtd_info1 ze wskaźnikami do funkcji obsługujących pamięć i wspomniany \verb1of_node1.
 
-Funkcja \verb1mtd_device_parse_register(...)1 nie zawsze dostaje gotową listę partycji. Czasami sterownik pamięci przesyła \verb1of_node1 jako parser data (trzeci parametr). Dzieje się tak w przypadku \verb8mpc51218. Wtedy sterownik podaje \verb1mtd_info1 ze wskaźnikami do funkcji obsługujących pamięć i wspomniany \verb1of_node1.
+Partycje potem są alokowane w funkcji \verb1allocate_partition1. Funkcja ta bierze master, czyli rodzi-
+ca partycji - urządzenie zawierające alokowaną partycję. Potem partycję, jej numer i offset. Zwracany
+jest zaalokowany obiekt typu \verb1mtd_part1, który dużo dziedziczy po masterze, natomiast funkcje czy-
+tające, piszące dla owej partycji nie są bezpośrednio dziedziczone. Tam przypisywane są funkcje z
+prefiksem part, które i tak odwołują się do funkcji mastera w swoim ciele.
 
-Partycje potem są alokowane w funkcji \verb1allocate_partition1. Funkcja ta bierze master, czyli rodzica partycji, urządzenie zawierające alokowaną partycję. Potem partycję, jej numer i offset. Zwracany jest zaalokowany obiekt typu \verb1mtd_part1, który dużo dziedziczy po masterze, natomiast funkcje czytające, piszące dla owej partycji nie są bezpośrednio dziedziczone. Tam przypisywane są funkcje z prefiksem \verb1part1, które i tak odwołują się do funkcji mastera w swoim ciele.
+\subsection{Podsystem UBI}
+W pliku \verb1drivers/mtd/ubi/build.c1 w funcji \verb1ubi_init1 inicjalizowane są wolumeny UBI zgodnie z podanymi parametrami modułu. Funkcja \verb1ubi_attach_mtd_dev1 mając podane \verb1mtd_info1, offset nagłówków \verb1ubi_ec_hdr1 i \verb1ubi_vid_hdr1 (\cite{ubidesign} strona 15) (te dwa dodawane są zawsze do każdego poprawnego erase block'u) i maksymalną liczbę PEB-ów (Physical Erase Block) na 1024 sztuki, tworzy blok UBI w statycznej tablicy modułu. Wcześniej tworzy odpowiednią klasę dla sysfs. Na spodzie pliku \verb1drivers/mtd/ubi/build.c1 jest pełen opis parametrów modułu, które są parsowane.
+
+Nagłówek \verb1ubi_ec_hdr1 jest aktualizowany po każdym wykasowaniu bloku. Jeżeli nastąpi utrata zasilania po wykasowaniu bloku to nagłówek nie zostanie zaktualizowany i potem wpsana mu zostania wartość uśredniona. Tłumaczy to \cite{ubidesign} strona 16.
+
+UBI dokonuje logicznego przemapowania najbardziej używanych bloków fizycznych. Jeżeli dany blok logiczny jest często używany to UBI podpisuje mu co pewien interwał inny blok fizyczny dbając o równomierne zużywanie flasha \cite{ubidesign} strona 12, \textit{Also, if a logical eraseblock is used too actively and UBI decides
+to assign it to another (less worn out) physical eraseblock\ldots} . \marginpar{\tiny{Wear leveling}}
+
+\subsection{Tworzenie wolumenów}
+Są narzędzia UBI utils, które pomagają tworzyć wolumeny. W jądrze jest obsługa instrukcji ioctl \verb1UBI_IOCMKVOL1, która tworzy volumen dla danego UBI zgodnie z podanymi parametrami \verb1ubi_mkvol_req1 podanymi przez użytkownika posługując się funkcją \verb1ubi_create_volume1. Dodaje strukturę \verb1ubi_volume1 do tablicy wewnątrz wybranego \verb1ubi_device1. Funkcja \verb1ubi_create_volume1 tworzy listę atrybutów dla tworzonego wolumenu za pomocą funkcji \verb1volume_sysfs_init1.
+
+\subsection{UBIFS}
+UBI file system bezpośrednio odwołuje się do wolumenów UBI podczas gdy jest montowany w funkcji \verb1ubifs_mount1 w pliku \verb1kernel/fs/ubifs/super.c1. Ta funkcja montująca zwraca wskaźnik do struktury \verb1dentry1, która jest przetrzymywana przez pole \verb1s_root1 struktury \verb1super_block1 zaalokowanej i wypełnionej (funkcja \verb1ubifs_fill_super1) tej funcji.
+
+
+
+\verb1ubiconcat1 może połączyć partycje wielu urządzeń fizycznych w jeden volumen UBI.
+
+\begin{thebibliography}{9}
+\bibitem{ubidesign} 
+UBI - Unsorted Block Images,\\
+\texttt{http://www.dubeiko.com/development/FileSystems/UBI/ubidesign.pdf}
+\end{thebibliography}
+
 \end{document}
