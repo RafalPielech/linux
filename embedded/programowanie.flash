@@ -1,0 +1,6 @@
+1. Programowanie STM32F103 używając ST-LINK V2
+a) openocd -f interface/stlink-v2.cfg -f target/stm32f1x.cfg
+b) telnet localhost 4444
+ - halt
+ - flash write_image erase /pełna/scieżka/program.bin 0x08000000
+ - reset
