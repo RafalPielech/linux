@@ -1,0 +1,11 @@
+# Zmiany w pliku z gałązki w stosunku do mastera
+git diff master gałązka plik
+
+# Plik w stan taki jaki jest aktualnie wpisany jako najnowszy
+git reset HEAD plik
+
+# Pokazanie zmian w stosunku do mastera na gałązce
+git log master..gałązka --oneline --name-only
+
+# Cofnięcie zmian w pliku do stanu na master
+git checkout master plik

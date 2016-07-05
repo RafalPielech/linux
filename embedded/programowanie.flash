@@ -1,4 +1,4 @@
-1. Programowanie STM32F103 używając ST-LINK V2
+1. Programowanie STM32F103 (też mała chińska płytka podłączona przez SWD) używając ST-LINK V2
 a) openocd -f interface/stlink-v2.cfg -f target/stm32f1x.cfg
 b) telnet localhost 4444
  - halt
