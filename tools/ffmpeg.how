@@ -1,0 +1,3 @@
+// Film od 50 minuty
+ffmpeg -ss 00:50:00 -i in.avi -c copy out.avi
+
